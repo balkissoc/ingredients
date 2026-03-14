@@ -1,36 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Meal → Shopping List</title>
 <link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <div class="container">
 
+<header class="hero">
+
+<div class="hero-text">
 <h1>Meal → Shopping List</h1>
+<p>Type a meal, choose servings, generate a clean shopping list.</p>
+</div>
 
-<div class="controls">
+<img src="food.png" class="hero-art">
 
-<input id="meal" placeholder="Enter meal">
+</header>
+
+<section class="controls">
+
+<input id="mealInput" placeholder="Try: quiche, tacos, fried rice">
 
 <select id="servings">
 <option value="2">2 servings</option>
 <option value="4" selected>4 servings</option>
 <option value="6">6 servings</option>
+<option value="8">8 servings</option>
 </select>
 
-<button id="generate">Generate</button>
-<button id="copy">Copy List</button>
-<button id="clear">Clear</button>
+<button id="generateBtn" class="btn-primary">Generate</button>
+<button id="addMealBtn" class="btn-secondary">Add Meal</button>
+<button id="copyBtn" class="btn-success">Copy List</button>
+<button id="clearBtn" class="btn-neutral">Clear</button>
 
-</div>
+</section>
 
-<div id="status"></div>
+<div id="mealChips" class="meal-chips"></div>
 
-<div id="results"></div>
+<div id="status" class="status"></div>
+
+<section id="shoppingList"></section>
 
 </div>
 
