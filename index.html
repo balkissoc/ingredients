@@ -3,21 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Recipe to Shopping List</title>
+  <title>Meal Name to Shopping List</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>Recipe to Shopping List</h1>
-    <p>Paste a recipe below and extract the ingredients into a shopping list.</p>
+    <h1>Meal Name to Shopping List</h1>
+    <p class="intro">
+      Type the name of a meal, such as spaghetti bolognese, butter chicken or tacos, and generate a typical shopping list of ingredients.
+    </p>
 
-    <textarea id="recipeInput" placeholder="Paste your recipe here..."></textarea>
+    <input
+      id="mealInput"
+      class="meal-input"
+      type="text"
+      placeholder="Enter a meal name..."
+      maxlength="120"
+    />
 
     <div class="buttons">
-      <button id="extractBtn">Extract Ingredients</button>
+      <button id="generateBtn">Generate Shopping List</button>
       <button id="copyBtn">Copy List</button>
       <button id="clearBtn">Clear</button>
     </div>
+
+    <p id="status" class="status"></p>
+    <p class="note">
+      Typical ingredient list only — recipes vary by cook, cuisine and serving style.
+    </p>
 
     <h2>Shopping List</h2>
     <ul id="shoppingList"></ul>
