@@ -1,183 +1,266 @@
-const mealInput=document.getElementById("mealInput")
-const servingsInput=document.getElementById("servings")
-const generateBtn=document.getElementById("generateBtn")
-const addMealBtn=document.getElementById("addMealBtn")
-const shoppingList=document.getElementById("shoppingList")
-const mealChips=document.getElementById("mealChips")
-const copyBtn=document.getElementById("copyBtn")
-const clearBtn=document.getElementById("clearBtn")
-const statusEl=document.getElementById("status")
+const mealInput = document.getElementById("mealInput");
+const servingsInput = document.getElementById("servings");
+const generateBtn = document.getElementById("generateBtn");
+const addMealBtn = document.getElementById("addMealBtn");
+const shoppingList = document.getElementById("shoppingList");
+const mealChips = document.getElementById("mealChips");
+const copyBtn = document.getElementById("copyBtn");
+const clearBtn = document.getElementById("clearBtn");
+const statusEl = document.getElementById("status");
 
-let meals=[]
-let items=[]
+let meals = [];
+let items = [];
 
 function setStatus(text){
-statusEl.textContent=text
+  statusEl.textContent = text;
 }
 
-function cap(text){
-return text.charAt(0).toUpperCase()+text.slice(1)
+function capitalise(text){
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function renderChips(){
-mealChips.innerHTML=""
-meals.forEach(m=>{
-const chip=document.createElement("div")
-chip.className="meal-chip"
-chip.textContent="🍽 "+m
-mealChips.appendChild(chip)
-})
+function normaliseUnits(item){
+
+  let amount = item.amount?.trim() || "";
+
+  if(!amount) return item;
+
+  if(/^\d+$/.test(amount)){
+
+    const name = item.name.toLowerCase();
+
+    if(
+      name.includes("beef") ||
+      name.includes("chicken") ||
+      name.includes("pork") ||
+      name.includes("broccoli") ||
+      name.includes("carrot") ||
+      name.includes("ginger")
+    ){
+      amount = amount + " g";
+    }
+
+    if(
+      name.includes("oil") ||
+      name.includes("soy sauce") ||
+      name.includes("vinegar")
+    ){
+      amount = amount + " ml";
+    }
+
+  }
+
+  return {...item, amount};
+}
+
+function mergeIngredients(list){
+
+  const merged = {};
+
+  list.forEach(item=>{
+
+    const key = item.name.toLowerCase();
+
+    if(!merged[key]){
+      merged[key] = {...item};
+      return;
+    }
+
+    const existing = merged[key];
+
+    const num1 = parseFloat(existing.amount);
+    const num2 = parseFloat(item.amount);
+
+    const unit1 = existing.amount.replace(num1,"").trim();
+    const unit2 = item.amount.replace(num2,"").trim();
+
+    if(!isNaN(num1) && !isNaN(num2) && unit1 === unit2){
+      existing.amount = (num1 + num2) + " " + unit1;
+    }
+
+  });
+
+  return Object.values(merged);
+}
+
+function renderMealChips(){
+
+  mealChips.innerHTML="";
+
+  meals.forEach(meal=>{
+    const chip=document.createElement("div");
+    chip.className="meal-chip";
+    chip.textContent="🍽 " + meal;
+    mealChips.appendChild(chip);
+  });
+
 }
 
 function render(){
 
-shoppingList.innerHTML=""
+  if(!items.length){
+    shoppingList.innerHTML="Your shopping list is empty";
+    return;
+  }
 
-if(!items.length){
-shoppingList.innerHTML='<div class="empty">🛒 Your shopping list is empty</div>'
-return
-}
+  const grouped={};
 
-const grouped={}
+  items.forEach(item=>{
+    if(!grouped[item.category]) grouped[item.category]=[];
+    grouped[item.category].push(item);
+  });
 
-items.forEach(i=>{
-const cat=i.category||"Other"
-if(!grouped[cat])grouped[cat]=[]
-grouped[cat].push(i)
-})
+  const order=["Produce","Meat","Dairy","Pantry","Condiments","Other"];
 
-Object.keys(grouped).forEach(cat=>{
+  shoppingList.innerHTML="";
 
-const title=document.createElement("div")
-title.className="category"
-title.textContent=cat
-shoppingList.appendChild(title)
+  order.forEach(category=>{
 
-const table=document.createElement("table")
+    if(!grouped[category]) return;
 
-table.innerHTML=`
-<thead>
-<tr>
-<th></th>
-<th>Ingredient</th>
-<th>Amount</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody></tbody>
-`
+    const block=document.createElement("div");
+    block.className="category-block";
 
-const body=table.querySelector("tbody")
+    const title=document.createElement("h3");
+    title.textContent=category;
 
-grouped[cat].forEach(item=>{
+    block.appendChild(title);
 
-const row=document.createElement("tr")
+    const table=document.createElement("table");
+    table.className="shopping-table";
 
-row.innerHTML=`
-<td><input type="checkbox"></td>
-<td><strong>${cap(item.name)}</strong></td>
-<td>${item.amount?`<span class="amount-pill">${item.amount}</span>`:"—"}</td>
-<td class="notes">${item.notes||"—"}</td>
-`
+    table.innerHTML=`
+      <thead>
+      <tr>
+      <th></th>
+      <th>Ingredient</th>
+      <th>Amount</th>
+      <th>Notes</th>
+      </tr>
+      </thead>
+      <tbody></tbody>
+    `;
 
-body.appendChild(row)
+    const tbody=table.querySelector("tbody");
 
-})
+    grouped[category].forEach(item=>{
 
-shoppingList.appendChild(table)
+      const row=document.createElement("tr");
 
-})
+      row.innerHTML=`
+      <td><input type="checkbox"></td>
+      <td class="ingredient-name">${capitalise(item.name)}</td>
+      <td class="amount-cell">${item.amount || "—"}</td>
+      <td class="notes-cell">${item.notes || "—"}</td>
+      `;
+
+      tbody.appendChild(row);
+
+    });
+
+    block.appendChild(table);
+    shoppingList.appendChild(block);
+
+  });
+
 }
 
 async function generateMeal(meal){
 
-setStatus("Generating shopping list...")
+  setStatus("Generating shopping list...");
 
-const res=await fetch("/api/generate",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-mealName:meal,
-servings:Number(servingsInput.value)
-})
-})
+  const response = await fetch("/api/generate",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      mealName:meal,
+      servings:Number(servingsInput.value)
+    })
+  });
 
-const data=await res.json()
+  const data = await response.json();
 
-items=[...items,...data.items]
+  if(!response.ok){
+    setStatus(data.error || "Error generating list");
+    return;
+  }
 
-render()
+  const newItems = data.items.map(normaliseUnits);
 
-setStatus(`Done. Generated ${data.items.length} ingredients.`)
+  items = mergeIngredients([...items,...newItems]);
+
+  render();
+
+  setStatus("Done. Generated " + newItems.length + " ingredients.");
 
 }
 
 generateBtn.onclick=async()=>{
 
-const meal=mealInput.value.trim()
+  const meal=mealInput.value.trim();
 
-if(!meal){
-setStatus("Enter a meal first")
-return
-}
+  if(!meal){
+    setStatus("Enter a meal name.");
+    return;
+  }
 
-generateBtn.disabled=true
+  items=[];
+  meals=[meal];
 
-try{
-items=[]
-meals=[meal]
-renderChips()
-await generateMeal(meal)
-}
-catch(e){
-setStatus("Error generating list")
-}
+  renderMealChips();
 
-generateBtn.disabled=false
+  await generateMeal(meal);
 
-}
+};
 
 addMealBtn.onclick=async()=>{
 
-const meal=mealInput.value.trim()
+  const meal=mealInput.value.trim();
 
-if(!meal)return
+  if(!meal){
+    setStatus("Enter a meal name.");
+    return;
+  }
 
-addMealBtn.disabled=true
+  meals.push(meal);
 
-meals.push(meal)
-renderChips()
+  renderMealChips();
 
-await generateMeal(meal)
+  await generateMeal(meal);
 
-addMealBtn.disabled=false
-
-}
+};
 
 copyBtn.onclick=async()=>{
 
-if(!items.length){
-setStatus("Nothing to copy")
-return
-}
+  const lines=items.map(i=>{
 
-const text=items.map(i=>`${i.name} ${i.amount||""} ${i.notes||""}`).join("\n")
+    let line=capitalise(i.name);
 
-await navigator.clipboard.writeText(text)
+    if(i.amount) line+=" - "+i.amount;
+    if(i.notes) line+=" ("+i.notes+")";
 
-setStatus("Copied shopping list")
+    return line;
 
-}
+  });
+
+  await navigator.clipboard.writeText(lines.join("\n"));
+
+  setStatus("Shopping list copied.");
+
+};
 
 clearBtn.onclick=()=>{
 
-mealInput.value=""
-meals=[]
-items=[]
-renderChips()
-render()
-setStatus("")
+  meals=[];
+  items=[];
 
-}
+  mealInput.value="";
 
-render()
+  renderMealChips();
+  render();
+
+  setStatus("");
+
+};
+
+render();
