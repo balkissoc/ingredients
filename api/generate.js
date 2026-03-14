@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { mealName } = req.body || {};
+    const { mealName, servings = 4 } = req.body || {};
 
     if (!mealName || !mealName.trim()) {
       return res.status(400).json({ error: "Meal name is required." });
@@ -23,13 +23,17 @@ You generate a typical shopping list for a named meal.
 Meal name:
 ${mealName}
 
+Servings:
+${servings}
+
 Return ONLY valid JSON in this exact format:
 {
   "items": [
     {
       "name": "string",
       "amount": "string",
-      "notes": "string"
+      "notes": "string",
+      "category": "Produce | Meat | Dairy | Pantry | Condiments | Other"
     }
   ]
 }
@@ -38,11 +42,13 @@ Rules:
 - Return a practical, typical ingredient list for the named meal.
 - Include common ingredients only.
 - Include quantities in metric where practical.
+- Quantities should be appropriate for the requested number of servings.
 - Keep "name" short and shopping-list friendly.
 - The "name" field must contain ONLY the ingredient name.
 - Do NOT include "Amount:", "Notes:", quantities, or preparation details inside the "name" field.
 - Put quantities only in "amount".
 - Put preparation or substitution details only in "notes".
+- Include a "category" for every ingredient using only one of these values: Produce, Meat, Dairy, Pantry, Condiments, Other.
 - Do not include method steps.
 - Do not include headings.
 - Do not include markdown.
@@ -106,6 +112,7 @@ Rules:
         let name = String(item.name || "").trim();
         let amount = String(item.amount || "").trim();
         let notes = String(item.notes || "").trim();
+        let category = String(item.category || "Other").trim();
 
         const amountMatch = name.match(/Amount:\s*([^|]+)(?:\||$)/i);
         const notesMatch = name.match(/Notes:\s*(.+)$/i);
@@ -124,10 +131,16 @@ Rules:
           .replace(/\|/g, "")
           .trim();
 
+        const allowedCategories = ["Produce", "Meat", "Dairy", "Pantry", "Condiments", "Other"];
+        if (!allowedCategories.includes(category)) {
+          category = "Other";
+        }
+
         return {
           name,
           amount,
-          notes
+          notes,
+          category
         };
       })
       .filter((item) => item.name);
