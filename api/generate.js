@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     const safeServings = Math.max(1, Math.min(12, Number(servings) || 4));
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+    const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
     if (!apiKey) {
       return res.status(500).json({ error: "OPENAI_API_KEY is not configured." });
@@ -50,8 +50,12 @@ Rules:
 - Categories must be one of: Produce, Meat, Dairy, Pantry, Condiments, Other
 `;
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
     const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`
@@ -59,9 +63,15 @@ Rules:
       body: JSON.stringify({
         model,
         input: prompt,
-        response_format: { type: "json_object" }
+        text: {
+          format: {
+            type: "json_object"
+          }
+        }
       })
     });
+
+    clearTimeout(timeout);
 
     const data = await openaiResponse.json();
 
@@ -80,6 +90,12 @@ Rules:
     if (!text) {
       console.error("No usable model output:", data);
       return res.status(500).json({ error: "No model output returned." });
+    }
+
+    text = text.trim();
+
+    if (text.startsWith("```")) {
+      text = text.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
     }
 
     let parsed;
@@ -113,12 +129,22 @@ Rules:
         category: allowedCategories.includes(i.category)
           ? i.category
           : "Other"
-      }));
+      }))
+      .filter((i) => i.name.length > 0);
+
+    if (!cleanedItems.length) {
+      return res.status(500).json({ error: "No ingredients generated." });
+    }
 
     return res.status(200).json({ items: cleanedItems });
 
   } catch (error) {
     console.error("Server error:", error);
+
+    if (error.name === "AbortError") {
+      return res.status(500).json({ error: "OpenAI request timed out." });
+    }
+
     return res.status(500).json({ error: "Internal server error." });
   }
 }
