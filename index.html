@@ -1,41 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meal Name to Shopping List</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<title>AI Shopping List</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <div class="container">
-    <h1>Meal Name to Shopping List</h1>
-    <p class="intro">
-      Type the name of a meal, such as spaghetti bolognese, butter chicken or tacos, and generate a typical shopping list of ingredients.
-    </p>
 
-    <input
-      id="mealInput"
-      class="meal-input"
-      type="text"
-      placeholder="Enter a meal name..."
-      maxlength="120"
-    />
+<div class="container">
 
-    <div class="buttons">
-      <button id="generateBtn">Generate Shopping List</button>
-      <button id="copyBtn">Copy List</button>
-      <button id="clearBtn">Clear</button>
-    </div>
+<h1>🍽 Meal → Shopping List</h1>
 
-    <p id="status" class="status"></p>
-    <p class="note">
-      Typical ingredient list only — recipes vary by cook, cuisine and serving style.
-    </p>
+<div class="controls">
 
-    <h2>Shopping List</h2>
-    <ul id="shoppingList"></ul>
-  </div>
+<input id="mealInput" placeholder="Type a meal e.g. butter chicken">
 
-  <script src="script.js"></script>
+<select id="servings">
+<option value="2">2 servings</option>
+<option value="4" selected>4 servings</option>
+<option value="6">6 servings</option>
+<option value="8">8 servings</option>
+</select>
+
+<button id="generateBtn">Generate</button>
+<button id="addMealBtn">Add Meal</button>
+
+</div>
+
+<div id="mealList"></div>
+
+<div class="actionBar">
+
+<button id="copyBtn">Copy List</button>
+<button id="clearBtn">Clear</button>
+
+</div>
+
+<p id="status"></p>
+
+<h2>Shopping List</h2>
+
+<div id="shoppingList"></div>
+
+</div>
+
+<script src="script.js"></script>
+
 </body>
 </html>
