@@ -1,127 +1,117 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #f7f7f7;
-  margin: 0;
-  padding: 20px;
-  color: #1f2937;
+const mealInput = document.getElementById("mealInput");
+const generateBtn = document.getElementById("generateBtn");
+const copyBtn = document.getElementById("copyBtn");
+const clearBtn = document.getElementById("clearBtn");
+const shoppingList = document.getElementById("shoppingList");
+const statusEl = document.getElementById("status");
+
+function setStatus(message) {
+  statusEl.textContent = message;
 }
 
-.container {
-  max-width: 820px;
-  margin: 0 auto;
-  background: white;
-  padding: 24px;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-}
+function renderList(items) {
+  shoppingList.innerHTML = "";
 
-h1, h2 {
-  margin-top: 0;
-}
-
-.intro {
-  margin-bottom: 16px;
-  color: #4b5563;
-  line-height: 1.5;
-}
-
-.meal-input {
-  width: 100%;
-  padding: 14px 12px;
-  font-size: 18px;
-  margin-bottom: 16px;
-  box-sizing: border-box;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-}
-
-.buttons {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-
-button {
-  padding: 10px 16px;
-  font-size: 15px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-button:hover {
-  opacity: 0.92;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-#generateBtn {
-  background: #2563eb;
-  color: white;
-}
-
-#copyBtn {
-  background: #16a34a;
-  color: white;
-}
-
-#clearBtn {
-  background: #6b7280;
-  color: white;
-}
-
-.status {
-  min-height: 22px;
-  margin: 0 0 8px 0;
-  color: #374151;
-  font-size: 14px;
-}
-
-.note {
-  margin: 0 0 20px 0;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-#shoppingList {
-  list-style: none;
-  padding-left: 0;
-  margin: 0;
-}
-
-#shoppingList li {
-  padding: 10px 0;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-label {
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.item-meta {
-  display: block;
-  font-size: 13px;
-  color: #6b7280;
-  margin-left: 24px;
-  margin-top: 4px;
-  font-weight: normal;
-}
-
-@media (max-width: 600px) {
-  .container {
-    padding: 18px;
+  if (!items || items.length === 0) {
+    shoppingList.innerHTML = "<li>No ingredients generated.</li>";
+    return;
   }
 
-  .meal-input {
-    font-size: 16px;
+  items.forEach((item, index) => {
+    const li = document.createElement("li");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = `item-${index}`;
+
+    const label = document.createElement("label");
+    label.htmlFor = `item-${index}`;
+    label.textContent = ` ${item.name}`;
+
+    li.appendChild(checkbox);
+    li.appendChild(label);
+
+    const parts = [];
+    if (item.amount) parts.push(`Amount: ${item.amount}`);
+    if (item.notes) parts.push(`Notes: ${item.notes}`);
+
+    if (parts.length > 0) {
+      const meta = document.createElement("span");
+      meta.className = "item-meta";
+      meta.textContent = parts.join(" | ");
+      li.appendChild(meta);
+    }
+
+    shoppingList.appendChild(li);
+  });
+}
+
+generateBtn.addEventListener("click", async () => {
+  const mealName = mealInput.value.trim();
+
+  if (!mealName) {
+    setStatus("Enter a meal name first.");
+    return;
   }
 
-  button {
-    width: 100%;
+  generateBtn.disabled = true;
+  setStatus("Generating shopping list...");
+
+  try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ mealName })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Generation failed.");
+    }
+
+    renderList(data.items);
+    setStatus(`Done. Generated ${data.items.length} ingredient${data.items.length === 1 ? "" : "s"}.`);
+  } catch (error) {
+    console.error(error);
+    setStatus(`Error: ${error.message}`);
+  } finally {
+    generateBtn.disabled = false;
   }
-}
+});
+
+copyBtn.addEventListener("click", async () => {
+  const items = [...shoppingList.querySelectorAll("li")].map(li => {
+    const label = li.querySelector("label")?.textContent.trim() || "";
+    const meta = li.querySelector(".item-meta")?.textContent.trim() || "";
+    return meta ? `${label} — ${meta}` : label;
+  });
+
+  if (items.length === 0) {
+    setStatus("Nothing to copy yet.");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(items.join("\n"));
+    setStatus("Shopping list copied.");
+  } catch (error) {
+    setStatus("Copy failed.");
+  }
+});
+
+clearBtn.addEventListener("click", () => {
+  mealInput.value = "";
+  shoppingList.innerHTML = "";
+  setStatus("");
+  mealInput.focus();
+});
+
+mealInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    generateBtn.click();
+  }
+});
