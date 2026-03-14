@@ -1,65 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meal to Shopping List</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<title>Meal → Shopping List</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <div class="page">
-    <div class="app-shell">
-      <div class="hero">
-        <div class="hero-badge">AI meal planner</div>
-        <h1>Meal → Shopping List</h1>
-        <p class="hero-text">
-          Type a meal, choose servings, and generate a colourful supermarket-style shopping list.
-        </p>
-      </div>
 
-      <div class="controls-card">
-        <div class="controls-row">
-          <input
-            id="mealInput"
-            class="meal-input"
-            type="text"
-            placeholder="Try: quiche, butter chicken, tacos, fried rice"
-            maxlength="120"
-          />
+<div class="container">
 
-          <select id="servings" class="servings-select">
-            <option value="2">2 servings</option>
-            <option value="4" selected>4 servings</option>
-            <option value="6">6 servings</option>
-            <option value="8">8 servings</option>
-          </select>
-        </div>
+<h1>Meal → Shopping List</h1>
 
-        <div class="button-row">
-          <button id="generateBtn" class="btn btn-primary">Generate</button>
-          <button id="addMealBtn" class="btn btn-secondary">Add Meal</button>
-          <button id="copyBtn" class="btn btn-success">Copy List</button>
-          <button id="clearBtn" class="btn btn-neutral">Clear</button>
-        </div>
+<div class="controls">
 
-        <div id="mealChips" class="meal-chips"></div>
-        <p id="status" class="status"></p>
-      </div>
+<input id="meal" placeholder="Enter meal">
 
-      <div class="list-header">
-        <div>
-          <h2>Shopping List</h2>
-          <p class="subtle">Grouped by aisle for quicker shopping.</p>
-        </div>
-      </div>
+<select id="servings">
+<option value="2">2 servings</option>
+<option value="4" selected>4 servings</option>
+<option value="6">6 servings</option>
+</select>
 
-      <div id="shoppingList" class="shopping-list"></div>
-    </div>
-  </div>
+<button id="generate">Generate</button>
+<button id="copy">Copy List</button>
+<button id="clear">Clear</button>
 
-  <script src="script.js"></script>
+</div>
+
+<div id="status"></div>
+
+<div id="results"></div>
+
+</div>
+
+<script src="script.js"></script>
+
 </body>
 </html>
