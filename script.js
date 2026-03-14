@@ -1,135 +1,170 @@
-const mealInput = document.getElementById("mealInput");
-const generateBtn = document.getElementById("generateBtn");
-const copyBtn = document.getElementById("copyBtn");
-const clearBtn = document.getElementById("clearBtn");
-const shoppingList = document.getElementById("shoppingList");
-const statusEl = document.getElementById("status");
+const mealInput=document.getElementById("mealInput")
+const servingsInput=document.getElementById("servings")
+const generateBtn=document.getElementById("generateBtn")
+const addMealBtn=document.getElementById("addMealBtn")
+const shoppingList=document.getElementById("shoppingList")
+const mealList=document.getElementById("mealList")
+const copyBtn=document.getElementById("copyBtn")
+const clearBtn=document.getElementById("clearBtn")
+const statusEl=document.getElementById("status")
 
-function setStatus(message) {
-  statusEl.textContent = message;
+let meals=[]
+let items=[]
+
+function setStatus(text){
+statusEl.textContent=text
 }
 
-function capitalise(text) {
-  if (!text) return "";
-  return text.charAt(0).toUpperCase() + text.slice(1);
+function capitalise(text){
+return text.charAt(0).toUpperCase()+text.slice(1)
 }
 
-function renderList(items) {
-  shoppingList.innerHTML = "";
+async function generate(meal){
 
-  if (!items || items.length === 0) {
-    shoppingList.innerHTML = "<li>No ingredients generated.</li>";
-    return;
-  }
+setStatus("Generating...")
 
-  items.forEach((item, index) => {
-    const li = document.createElement("li");
-    li.className = "shopping-item";
+const res=await fetch("/api/generate",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+mealName:meal,
+servings:servingsInput.value
+})
+})
 
-    const topRow = document.createElement("div");
-    topRow.className = "shopping-item-top";
+const data=await res.json()
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.id = `item-${index}`;
-    checkbox.className = "shopping-checkbox";
+if(!res.ok) throw new Error(data.error)
 
-    const label = document.createElement("label");
-    label.htmlFor = `item-${index}`;
-    label.className = "shopping-name";
-    label.textContent = capitalise(item.name);
+items=[...items,...data.items]
 
-    topRow.appendChild(checkbox);
-    topRow.appendChild(label);
-    li.appendChild(topRow);
+render()
 
-    if (item.amount) {
-      const amount = document.createElement("div");
-      amount.className = "shopping-meta";
-      amount.textContent = `Amount: ${item.amount}`;
-      li.appendChild(amount);
-    }
-
-    if (item.notes) {
-      const notes = document.createElement("div");
-      notes.className = "shopping-meta";
-      notes.textContent = `Notes: ${item.notes}`;
-      li.appendChild(notes);
-    }
-
-    shoppingList.appendChild(li);
-  });
+setStatus("Done")
 }
 
-generateBtn.addEventListener("click", async () => {
-  const mealName = mealInput.value.trim();
+function render(){
 
-  if (!mealName) {
-    setStatus("Enter a meal name first.");
-    return;
-  }
+const grouped={}
 
-  generateBtn.disabled = true;
-  setStatus("Generating shopping list...");
+items.forEach(item=>{
 
-  try {
-    const response = await fetch("/api/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ mealName })
-    });
+const cat=item.category||"Other"
 
-    const data = await response.json();
+if(!grouped[cat]) grouped[cat]=[]
 
-    if (!response.ok) {
-      throw new Error(data.error || "Generation failed.");
-    }
+grouped[cat].push(item)
 
-    renderList(data.items);
-    setStatus(`Done. Generated ${data.items.length} ingredient${data.items.length === 1 ? "" : "s"}.`);
-  } catch (error) {
-    console.error(error);
-    setStatus(`Error: ${error.message}`);
-  } finally {
-    generateBtn.disabled = false;
-  }
-});
+})
 
-copyBtn.addEventListener("click", async () => {
-  const items = [...shoppingList.querySelectorAll(".shopping-item")].map((li) => {
-    const name = li.querySelector(".shopping-name")?.textContent.trim() || "";
-    const meta = [...li.querySelectorAll(".shopping-meta")]
-      .map((el) => el.textContent.trim())
-      .join(" | ");
+shoppingList.innerHTML=""
 
-    return meta ? `${name} — ${meta}` : name;
-  });
+Object.keys(grouped).forEach(cat=>{
 
-  if (items.length === 0) {
-    setStatus("Nothing to copy yet.");
-    return;
-  }
+const section=document.createElement("div")
+section.className="category"
 
-  try {
-    await navigator.clipboard.writeText(items.join("\n"));
-    setStatus("Shopping list copied.");
-  } catch (error) {
-    setStatus("Copy failed.");
-  }
-});
+const title=document.createElement("div")
+title.className="categoryTitle"
+title.textContent=cat
 
-clearBtn.addEventListener("click", () => {
-  mealInput.value = "";
-  shoppingList.innerHTML = "";
-  setStatus("");
-  mealInput.focus();
-});
+section.appendChild(title)
 
-mealInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    generateBtn.click();
-  }
-});
+grouped[cat].forEach((item,i)=>{
+
+const card=document.createElement("div")
+card.className="card"
+
+const top=document.createElement("div")
+top.className="cardTop"
+
+const cb=document.createElement("input")
+cb.type="checkbox"
+
+const name=document.createElement("div")
+name.className="itemName"
+name.textContent=capitalise(item.name)
+
+top.appendChild(cb)
+top.appendChild(name)
+
+card.appendChild(top)
+
+if(item.amount){
+
+const meta=document.createElement("div")
+meta.className="meta"
+meta.textContent=`Amount: ${item.amount}`
+
+card.appendChild(meta)
+
+}
+
+if(item.notes){
+
+const meta=document.createElement("div")
+meta.className="meta"
+meta.textContent=`Notes: ${item.notes}`
+
+card.appendChild(meta)
+
+}
+
+section.appendChild(card)
+
+})
+
+shoppingList.appendChild(section)
+
+})
+
+}
+
+generateBtn.onclick=()=>{
+
+const meal=mealInput.value.trim()
+
+if(!meal) return
+
+generate(meal)
+
+}
+
+addMealBtn.onclick=()=>{
+
+const meal=mealInput.value.trim()
+
+if(!meal) return
+
+meals.push(meal)
+
+const tag=document.createElement("div")
+tag.textContent="🍽 "+meal
+
+mealList.appendChild(tag)
+
+generate(meal)
+
+}
+
+clearBtn.onclick=()=>{
+
+items=[]
+meals=[]
+shoppingList.innerHTML=""
+mealList.innerHTML=""
+setStatus("")
+
+}
+
+copyBtn.onclick=()=>{
+
+const list=[...document.querySelectorAll(".itemName")]
+
+.map(el=>el.textContent)
+
+navigator.clipboard.writeText(list.join("\n"))
+
+setStatus("Copied")
+
+}
