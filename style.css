@@ -334,3 +334,92 @@ body {
     width: 100%;
   }
 }
+.table-wrap {
+  overflow-x: auto;
+}
+
+.shopping-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.shopping-table thead th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--muted);
+  padding: 14px 14px;
+  background: #fff8f4;
+  border-bottom: 1px solid var(--line);
+}
+
+.shopping-table tbody td {
+  padding: 14px 14px;
+  border-bottom: 1px solid #f2ede8;
+  vertical-align: top;
+  background: #fff;
+}
+
+.shopping-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.shopping-table tbody tr:hover td {
+  background: #fffdfb;
+}
+
+.col-check {
+  width: 42px;
+  text-align: center;
+}
+
+.item-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.ingredient-cell {
+  min-width: 220px;
+}
+
+.ingredient-name {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.amount-cell {
+  white-space: nowrap;
+  font-weight: 700;
+  color: #9a3412;
+  min-width: 120px;
+}
+
+.notes-cell {
+  color: var(--muted);
+  min-width: 220px;
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .shopping-table thead th,
+  .shopping-table tbody td {
+    padding: 12px 10px;
+    font-size: 14px;
+  }
+
+  .ingredient-cell {
+    min-width: 180px;
+  }
+
+  .notes-cell {
+    min-width: 180px;
+  }
+}
