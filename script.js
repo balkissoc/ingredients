@@ -16,6 +16,7 @@ function setStatus(text){
 }
 
 function capitalise(text){
+  if(!text) return "";
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
@@ -98,67 +99,77 @@ function renderMealChips(){
 
 function render(){
 
+  shoppingList.innerHTML="";
+
   if(!items.length){
-    shoppingList.innerHTML="Your shopping list is empty";
+    shoppingList.innerHTML = `<div class="empty-state">Your shopping list is empty</div>`;
     return;
   }
 
-  const grouped={};
+  const grouped = {};
 
   items.forEach(item=>{
-    if(!grouped[item.category]) grouped[item.category]=[];
-    grouped[item.category].push(item);
+    const cat = item.category || "Other";
+    if(!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(item);
   });
 
-  const order=["Produce","Meat","Dairy","Pantry","Condiments","Other"];
-
-  shoppingList.innerHTML="";
+  const order = ["Produce","Meat","Dairy","Pantry","Condiments","Other"];
 
   order.forEach(category=>{
 
     if(!grouped[category]) return;
 
-    const block=document.createElement("div");
-    block.className="category-block";
+    const block = document.createElement("section");
+    block.className = "category-block";
 
-    const title=document.createElement("h3");
-    title.textContent=category;
+    const header = document.createElement("div");
+    header.className = "category-header";
 
-    block.appendChild(title);
+    const title = document.createElement("h3");
+    title.className = "category-title";
+    title.textContent = category;
 
-    const table=document.createElement("table");
+    header.appendChild(title);
+    block.appendChild(header);
+
+    const tableWrap = document.createElement("div");
+    tableWrap.className="table-wrap";
+
+    const table = document.createElement("table");
     table.className="shopping-table";
 
-    table.innerHTML=`
+    table.innerHTML = `
       <thead>
-      <tr>
-      <th></th>
-      <th>Ingredient</th>
-      <th>Amount</th>
-      <th>Notes</th>
-      </tr>
+        <tr>
+          <th class="col-check"></th>
+          <th>Ingredient</th>
+          <th>Amount</th>
+          <th>Notes</th>
+        </tr>
       </thead>
       <tbody></tbody>
     `;
 
-    const tbody=table.querySelector("tbody");
+    const tbody = table.querySelector("tbody");
 
     grouped[category].forEach(item=>{
 
       const row=document.createElement("tr");
 
       row.innerHTML=`
-      <td><input type="checkbox"></td>
-      <td class="ingredient-name">${capitalise(item.name)}</td>
-      <td class="amount-cell">${item.amount || "—"}</td>
-      <td class="notes-cell">${item.notes || "—"}</td>
+        <td class="col-check"><input type="checkbox" class="item-checkbox"></td>
+        <td class="ingredient-name">${capitalise(item.name)}</td>
+        <td class="amount-cell">${item.amount || "—"}</td>
+        <td class="notes-cell">${item.notes || "—"}</td>
       `;
 
       tbody.appendChild(row);
 
     });
 
-    block.appendChild(table);
+    tableWrap.appendChild(table);
+    block.appendChild(tableWrap);
     shoppingList.appendChild(block);
 
   });
@@ -195,9 +206,9 @@ async function generateMeal(meal){
 
 }
 
-generateBtn.onclick=async()=>{
+generateBtn.onclick = async()=>{
 
-  const meal=mealInput.value.trim();
+  const meal = mealInput.value.trim();
 
   if(!meal){
     setStatus("Enter a meal name.");
@@ -213,9 +224,9 @@ generateBtn.onclick=async()=>{
 
 };
 
-addMealBtn.onclick=async()=>{
+addMealBtn.onclick = async()=>{
 
-  const meal=mealInput.value.trim();
+  const meal = mealInput.value.trim();
 
   if(!meal){
     setStatus("Enter a meal name.");
@@ -230,17 +241,13 @@ addMealBtn.onclick=async()=>{
 
 };
 
-copyBtn.onclick=async()=>{
+copyBtn.onclick = async()=>{
 
-  const lines=items.map(i=>{
-
-    let line=capitalise(i.name);
-
-    if(i.amount) line+=" - "+i.amount;
-    if(i.notes) line+=" ("+i.notes+")";
-
+  const lines = items.map(i=>{
+    let line = capitalise(i.name);
+    if(i.amount) line += " - " + i.amount;
+    if(i.notes) line += " (" + i.notes + ")";
     return line;
-
   });
 
   await navigator.clipboard.writeText(lines.join("\n"));
@@ -249,7 +256,7 @@ copyBtn.onclick=async()=>{
 
 };
 
-clearBtn.onclick=()=>{
+clearBtn.onclick = ()=>{
 
   meals=[];
   items=[];
