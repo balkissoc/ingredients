@@ -88,52 +88,66 @@ function render() {
     header.appendChild(title);
     block.appendChild(header);
 
-    const grid = document.createElement("div");
-    grid.className = "items-grid";
+    const tableWrap = document.createElement("div");
+    tableWrap.className = "table-wrap";
+
+    const table = document.createElement("table");
+    table.className = "shopping-table";
+
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th class="col-check"></th>
+          <th>Ingredient</th>
+          <th>Amount</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+
+    const tbody = table.querySelector("tbody");
 
     grouped[category].forEach((item, index) => {
-      const card = document.createElement("div");
-      card.className = "item-card";
+      const tr = document.createElement("tr");
+
+      const tdCheck = document.createElement("td");
+      tdCheck.className = "col-check";
 
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.className = "item-checkbox";
       checkbox.id = `${category}-${index}-${item.name}`;
 
-      const content = document.createElement("div");
-      content.className = "item-content";
+      tdCheck.appendChild(checkbox);
 
-      const top = document.createElement("div");
-      top.className = "item-top";
+      const tdName = document.createElement("td");
+      tdName.className = "ingredient-cell";
 
-      const name = document.createElement("h4");
-      name.className = "item-name";
-      name.textContent = capitalise(item.name);
+      const ingredientName = document.createElement("span");
+      ingredientName.className = "ingredient-name";
+      ingredientName.textContent = capitalise(item.name);
 
-      top.appendChild(name);
+      tdName.appendChild(ingredientName);
 
-      if (item.amount) {
-        const amount = document.createElement("span");
-        amount.className = "amount-pill";
-        amount.textContent = item.amount;
-        top.appendChild(amount);
-      }
+      const tdAmount = document.createElement("td");
+      tdAmount.className = "amount-cell";
+      tdAmount.textContent = item.amount || "—";
 
-      content.appendChild(top);
+      const tdNotes = document.createElement("td");
+      tdNotes.className = "notes-cell";
+      tdNotes.textContent = item.notes || "—";
 
-      if (item.notes) {
-        const notes = document.createElement("div");
-        notes.className = "item-notes";
-        notes.textContent = item.notes;
-        content.appendChild(notes);
-      }
+      tr.appendChild(tdCheck);
+      tr.appendChild(tdName);
+      tr.appendChild(tdAmount);
+      tr.appendChild(tdNotes);
 
-      card.appendChild(checkbox);
-      card.appendChild(content);
-      grid.appendChild(card);
+      tbody.appendChild(tr);
     });
 
-    block.appendChild(grid);
+    tableWrap.appendChild(table);
+    block.appendChild(tableWrap);
     shoppingList.appendChild(block);
   });
 }
@@ -165,6 +179,7 @@ async function generateMeal(meal) {
 
 generateBtn.addEventListener("click", async () => {
   const meal = mealInput.value.trim();
+
   if (!meal) {
     setStatus("Enter a meal name first.");
     return;
@@ -187,6 +202,7 @@ generateBtn.addEventListener("click", async () => {
 
 addMealBtn.addEventListener("click", async () => {
   const meal = mealInput.value.trim();
+
   if (!meal) {
     setStatus("Enter a meal name first.");
     return;
@@ -244,173 +260,4 @@ mealInput.addEventListener("keydown", (event) => {
   }
 });
 
-render();const mealInput=document.getElementById("mealInput")
-const servingsInput=document.getElementById("servings")
-const generateBtn=document.getElementById("generateBtn")
-const addMealBtn=document.getElementById("addMealBtn")
-const shoppingList=document.getElementById("shoppingList")
-const mealList=document.getElementById("mealList")
-const copyBtn=document.getElementById("copyBtn")
-const clearBtn=document.getElementById("clearBtn")
-const statusEl=document.getElementById("status")
-
-let meals=[]
-let items=[]
-
-function setStatus(text){
-statusEl.textContent=text
-}
-
-function capitalise(text){
-return text.charAt(0).toUpperCase()+text.slice(1)
-}
-
-async function generate(meal){
-
-setStatus("Generating...")
-
-const res=await fetch("/api/generate",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-mealName:meal,
-servings:servingsInput.value
-})
-})
-
-const data=await res.json()
-
-if(!res.ok) throw new Error(data.error)
-
-items=[...items,...data.items]
-
-render()
-
-setStatus("Done")
-}
-
-function render(){
-
-const grouped={}
-
-items.forEach(item=>{
-
-const cat=item.category||"Other"
-
-if(!grouped[cat]) grouped[cat]=[]
-
-grouped[cat].push(item)
-
-})
-
-shoppingList.innerHTML=""
-
-Object.keys(grouped).forEach(cat=>{
-
-const section=document.createElement("div")
-section.className="category"
-
-const title=document.createElement("div")
-title.className="categoryTitle"
-title.textContent=cat
-
-section.appendChild(title)
-
-grouped[cat].forEach((item,i)=>{
-
-const card=document.createElement("div")
-card.className="card"
-
-const top=document.createElement("div")
-top.className="cardTop"
-
-const cb=document.createElement("input")
-cb.type="checkbox"
-
-const name=document.createElement("div")
-name.className="itemName"
-name.textContent=capitalise(item.name)
-
-top.appendChild(cb)
-top.appendChild(name)
-
-card.appendChild(top)
-
-if(item.amount){
-
-const meta=document.createElement("div")
-meta.className="meta"
-meta.textContent=`Amount: ${item.amount}`
-
-card.appendChild(meta)
-
-}
-
-if(item.notes){
-
-const meta=document.createElement("div")
-meta.className="meta"
-meta.textContent=`Notes: ${item.notes}`
-
-card.appendChild(meta)
-
-}
-
-section.appendChild(card)
-
-})
-
-shoppingList.appendChild(section)
-
-})
-
-}
-
-generateBtn.onclick=()=>{
-
-const meal=mealInput.value.trim()
-
-if(!meal) return
-
-generate(meal)
-
-}
-
-addMealBtn.onclick=()=>{
-
-const meal=mealInput.value.trim()
-
-if(!meal) return
-
-meals.push(meal)
-
-const tag=document.createElement("div")
-tag.textContent="🍽 "+meal
-
-mealList.appendChild(tag)
-
-generate(meal)
-
-}
-
-clearBtn.onclick=()=>{
-
-items=[]
-meals=[]
-shoppingList.innerHTML=""
-mealList.innerHTML=""
-setStatus("")
-
-}
-
-copyBtn.onclick=()=>{
-
-const list=[...document.querySelectorAll(".itemName")]
-
-.map(el=>el.textContent)
-
-navigator.clipboard.writeText(list.join("\n"))
-
-setStatus("Copied")
-
-}
+render();
