@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const model = process.env.OPENAI_MODEL || "gpt-5-mini";
+    const model = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 
     if (!apiKey) {
       return res.status(500).json({ error: "OPENAI_API_KEY is not configured." });
@@ -69,9 +69,13 @@ Rules:
       });
     }
 
-    let text = data.output_text || "";
+    let text =
+      data.output_text ||
+      data.output?.[0]?.content?.[0]?.text ||
+      "";
 
     if (!text) {
+      console.error("No usable model output:", data);
       return res.status(500).json({ error: "No model output returned." });
     }
 
@@ -94,8 +98,8 @@ Rules:
     }
 
     const cleanedItems = parsed.items
-      .filter(item => item && item.name)
-      .map(item => ({
+      .filter((item) => item && item.name)
+      .map((item) => ({
         name: String(item.name).trim(),
         amount: String(item.amount || "").trim(),
         notes: String(item.notes || "").trim()
