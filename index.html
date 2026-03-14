@@ -2,31 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Meal → Shopping List</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link rel="stylesheet" href="style.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
 <div class="container">
 
-<header class="hero">
+<img src="/food.png" class="hero-art" alt="food">
 
-<div class="hero-text">
 <h1>Meal → Shopping List</h1>
-<p>Type a meal, choose servings, generate a clean shopping list.</p>
-</div>
+<p class="subtitle">Type a meal, choose servings, generate a clean shopping list.</p>
 
-<img src="food.png" class="hero-art">
+<div class="controls">
 
-</header>
-
-<section class="controls">
-
-<input id="mealInput" placeholder="Try: quiche, tacos, fried rice">
+<input id="mealInput" placeholder="Enter meal">
 
 <select id="servings">
 <option value="2">2 servings</option>
@@ -35,18 +28,20 @@
 <option value="8">8 servings</option>
 </select>
 
-<button id="generateBtn" class="btn-primary">Generate</button>
-<button id="addMealBtn" class="btn-secondary">Add Meal</button>
-<button id="copyBtn" class="btn-success">Copy List</button>
-<button id="clearBtn" class="btn-neutral">Clear</button>
+<button class="generate" id="generateBtn">Generate</button>
+<button class="add-meal" id="addMealBtn">Add Meal</button>
+<button class="copy" id="copyBtn">Copy List</button>
+<button class="clear" id="clearBtn">Clear</button>
 
-</section>
+</div>
 
-<div id="mealChips" class="meal-chips"></div>
+<div id="mealChips"></div>
 
-<div id="status" class="status"></div>
+<p class="status" id="status"></p>
 
-<section id="shoppingList"></section>
+<div id="shoppingList" class="empty-state">
+Your shopping list is empty
+</div>
 
 </div>
 
