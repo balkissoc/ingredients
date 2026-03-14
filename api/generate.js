@@ -10,6 +10,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Meal name is required." });
     }
 
+    const safeServings = Math.max(1, Math.min(12, Number(servings) || 4));
+
     const apiKey = process.env.OPENAI_API_KEY;
     const model = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 
@@ -18,43 +20,34 @@ export default async function handler(req, res) {
     }
 
     const prompt = `
-You generate a typical shopping list for a named meal.
+You generate a practical shopping list for a meal.
 
-Meal name:
-${mealName}
-
-Servings:
-${servings}
+Meal: ${mealName}
+Servings: ${safeServings}
 
 Return ONLY valid JSON in this exact format:
+
 {
-  "items": [
+  "items":[
     {
-      "name": "string",
-      "amount": "string",
-      "notes": "string",
-      "category": "Produce | Meat | Dairy | Pantry | Condiments | Other"
+      "name":"ingredient",
+      "amount":"quantity",
+      "notes":"optional detail",
+      "category":"Produce | Meat | Dairy | Pantry | Condiments | Other"
     }
   ]
 }
 
 Rules:
-- Return a practical, typical ingredient list for the named meal.
-- Include common ingredients only.
-- Include quantities in metric where practical.
-- Quantities should be appropriate for the requested number of servings.
-- Keep "name" short and shopping-list friendly.
-- The "name" field must contain ONLY the ingredient name.
-- Do NOT include "Amount:", "Notes:", quantities, or preparation details inside the "name" field.
-- Put quantities only in "amount".
-- Put preparation or substitution details only in "notes".
-- Include a "category" for every ingredient using only one of these values: Produce, Meat, Dairy, Pantry, Condiments, Other.
-- Do not include method steps.
-- Do not include headings.
-- Do not include markdown.
-- If unsure, choose the most common mainstream version of the meal.
-- If the meal is very broad, provide a sensible base recipe.
-- Amount and notes can be empty strings if necessary.
+- No markdown
+- No headings
+- No explanation
+- Ingredient name must contain ONLY the ingredient
+- Amount contains only quantity
+- Notes contains preparation or substitutions
+- Use metric quantities where possible
+- Quantities must match the requested servings
+- Categories must be one of: Produce, Meat, Dairy, Pantry, Condiments, Other
 `;
 
     const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
@@ -65,7 +58,8 @@ Rules:
       },
       body: JSON.stringify({
         model,
-        input: prompt
+        input: prompt,
+        response_format: { type: "json_object" }
       })
     });
 
@@ -88,64 +82,41 @@ Rules:
       return res.status(500).json({ error: "No model output returned." });
     }
 
-    text = text.trim();
-
-    if (text.startsWith("```")) {
-      text = text.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
-    }
-
     let parsed;
+
     try {
       parsed = JSON.parse(text);
     } catch (error) {
-      console.error("JSON parse error:", error, text);
+      console.error("JSON parse error:", text);
       return res.status(500).json({ error: "Model returned invalid JSON." });
     }
 
-    if (!parsed.items || !Array.isArray(parsed.items)) {
+    if (!Array.isArray(parsed.items)) {
       return res.status(500).json({ error: "Model returned unexpected data." });
     }
 
+    const allowedCategories = [
+      "Produce",
+      "Meat",
+      "Dairy",
+      "Pantry",
+      "Condiments",
+      "Other"
+    ];
+
     const cleanedItems = parsed.items
-      .filter((item) => item && item.name)
-      .map((item) => {
-        let name = String(item.name || "").trim();
-        let amount = String(item.amount || "").trim();
-        let notes = String(item.notes || "").trim();
-        let category = String(item.category || "Other").trim();
-
-        const amountMatch = name.match(/Amount:\s*([^|]+)(?:\||$)/i);
-        const notesMatch = name.match(/Notes:\s*(.+)$/i);
-
-        if (!amount && amountMatch) {
-          amount = amountMatch[1].trim();
-        }
-
-        if (!notes && notesMatch) {
-          notes = notesMatch[1].trim();
-        }
-
-        name = name
-          .replace(/Amount:\s*([^|]+)(?:\||$)/i, "")
-          .replace(/Notes:\s*(.+)$/i, "")
-          .replace(/\|/g, "")
-          .trim();
-
-        const allowedCategories = ["Produce", "Meat", "Dairy", "Pantry", "Condiments", "Other"];
-        if (!allowedCategories.includes(category)) {
-          category = "Other";
-        }
-
-        return {
-          name,
-          amount,
-          notes,
-          category
-        };
-      })
-      .filter((item) => item.name);
+      .filter((i) => i && i.name)
+      .map((i) => ({
+        name: String(i.name || "").trim(),
+        amount: String(i.amount || "").trim(),
+        notes: String(i.notes || "").trim(),
+        category: allowedCategories.includes(i.category)
+          ? i.category
+          : "Other"
+      }));
 
     return res.status(200).json({ items: cleanedItems });
+
   } catch (error) {
     console.error("Server error:", error);
     return res.status(500).json({ error: "Internal server error." });
