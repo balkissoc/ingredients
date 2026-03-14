@@ -9,6 +9,11 @@ function setStatus(message) {
   statusEl.textContent = message;
 }
 
+function capitalise(text) {
+  if (!text) return "";
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function renderList(items) {
   shoppingList.innerHTML = "";
 
@@ -19,27 +24,37 @@ function renderList(items) {
 
   items.forEach((item, index) => {
     const li = document.createElement("li");
+    li.className = "shopping-item";
+
+    const topRow = document.createElement("div");
+    topRow.className = "shopping-item-top";
 
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.id = `item-${index}`;
+    checkbox.className = "shopping-checkbox";
 
     const label = document.createElement("label");
     label.htmlFor = `item-${index}`;
-    label.textContent = ` ${item.name}`;
+    label.className = "shopping-name";
+    label.textContent = capitalise(item.name);
 
-    li.appendChild(checkbox);
-    li.appendChild(label);
+    topRow.appendChild(checkbox);
+    topRow.appendChild(label);
+    li.appendChild(topRow);
 
-    const parts = [];
-    if (item.amount) parts.push(`Amount: ${item.amount}`);
-    if (item.notes) parts.push(`Notes: ${item.notes}`);
+    if (item.amount) {
+      const amount = document.createElement("div");
+      amount.className = "shopping-meta";
+      amount.textContent = `Amount: ${item.amount}`;
+      li.appendChild(amount);
+    }
 
-    if (parts.length > 0) {
-      const meta = document.createElement("span");
-      meta.className = "item-meta";
-      meta.textContent = parts.join(" | ");
-      li.appendChild(meta);
+    if (item.notes) {
+      const notes = document.createElement("div");
+      notes.className = "shopping-meta";
+      notes.textContent = `Notes: ${item.notes}`;
+      li.appendChild(notes);
     }
 
     shoppingList.appendChild(li);
@@ -83,10 +98,13 @@ generateBtn.addEventListener("click", async () => {
 });
 
 copyBtn.addEventListener("click", async () => {
-  const items = [...shoppingList.querySelectorAll("li")].map(li => {
-    const label = li.querySelector("label")?.textContent.trim() || "";
-    const meta = li.querySelector(".item-meta")?.textContent.trim() || "";
-    return meta ? `${label} — ${meta}` : label;
+  const items = [...shoppingList.querySelectorAll(".shopping-item")].map((li) => {
+    const name = li.querySelector(".shopping-name")?.textContent.trim() || "";
+    const meta = [...li.querySelectorAll(".shopping-meta")]
+      .map((el) => el.textContent.trim())
+      .join(" | ");
+
+    return meta ? `${name} — ${meta}` : name;
   });
 
   if (items.length === 0) {
