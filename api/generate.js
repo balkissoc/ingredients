@@ -39,7 +39,10 @@ Rules:
 - Include common ingredients only.
 - Include quantities in metric where practical.
 - Keep "name" short and shopping-list friendly.
-- Put preparation or substitution notes in "notes".
+- The "name" field must contain ONLY the ingredient name.
+- Do NOT include "Amount:", "Notes:", quantities, or preparation details inside the "name" field.
+- Put quantities only in "amount".
+- Put preparation or substitution details only in "notes".
 - Do not include method steps.
 - Do not include headings.
 - Do not include markdown.
@@ -99,11 +102,35 @@ Rules:
 
     const cleanedItems = parsed.items
       .filter((item) => item && item.name)
-      .map((item) => ({
-        name: String(item.name).trim(),
-        amount: String(item.amount || "").trim(),
-        notes: String(item.notes || "").trim()
-      }));
+      .map((item) => {
+        let name = String(item.name || "").trim();
+        let amount = String(item.amount || "").trim();
+        let notes = String(item.notes || "").trim();
+
+        const amountMatch = name.match(/Amount:\s*([^|]+)(?:\||$)/i);
+        const notesMatch = name.match(/Notes:\s*(.+)$/i);
+
+        if (!amount && amountMatch) {
+          amount = amountMatch[1].trim();
+        }
+
+        if (!notes && notesMatch) {
+          notes = notesMatch[1].trim();
+        }
+
+        name = name
+          .replace(/Amount:\s*([^|]+)(?:\||$)/i, "")
+          .replace(/Notes:\s*(.+)$/i, "")
+          .replace(/\|/g, "")
+          .trim();
+
+        return {
+          name,
+          amount,
+          notes
+        };
+      })
+      .filter((item) => item.name);
 
     return res.status(200).json({ items: cleanedItems });
   } catch (error) {
